@@ -4,14 +4,15 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 db = SQLAlchemy()
 
-class Usuario(db.Model):
-    __tablename__ = "usuario"
-    id: Mapped[int] = mapped_column(primary_key=True)
-    email: Mapped[str] = mapped_column(String(120), unique=True, nullable=False)
-    password: Mapped[str] = mapped_column(String(80), nullable=False)
-    nickname: Mapped[str] = mapped_column(String(100), nullable=False)
 
-    favoritos: Mapped[list["Favorito"]] = relationship("Favorito", back_populates="usuario")
+class User(db.Model):
+    __tablename__ = "user"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    email: Mapped[str] = mapped_column(String(120), unique=True, nullable=False)
+    password: Mapped[str] = mapped_column(nullable=False)
+    nickname: Mapped[str] = mapped_column(String(100), nullable=False)
+    favorites: Mapped[list["Favorites"]] = relationship ("Favorites", back_populates="user")
+    
 
 
     def serialize(self):
@@ -19,32 +20,16 @@ class Usuario(db.Model):
             "id": self.id,
             "email": self.email,
             # do not serialize the password, its a security breach
-            "nickname" : self.nickname
+            "nickname": self.nickname,
         }
-    
-class Planeta(db.Model):
-    __tablename__ = "planeta"
-    id: Mapped[int] = mapped_column(primary_key=True)
+
+
+class Planet(db.Model):
+    __tablename__ = "planet"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
     name: Mapped[str] = mapped_column(String(100), nullable=False)
     description: Mapped[str] = mapped_column(String(500), nullable=False)
-    rotation: Mapped[int] = mapped_column(Integer(10))
-
-    def serialize(self):
-        return {
-            "id": self.id,
-            "name": self.name,
-            "description": self.description,
-            "rotation": self.rotation
-        }
     
-class Personaje(db.Model):
-    __tablename__ = "personaje"
-    id: Mapped[int] = mapped_column(primary_key=True)
-    name: Mapped[str] = mapped_column(String(100), nullable=False)
-    description: Mapped[str] = mapped_column(String(500), nullable=False)
-    planeta_id: Mapped[int] = mapped_column(Integer, ForeignKey("planeta.id"))
-
-    planeta: Mapped["Planeta"] = relationship("Planeta")
 
     def serialize(self):
         return {
@@ -52,15 +37,28 @@ class Personaje(db.Model):
             "name": self.name,
             "description": self.description,
         }
-    
-class Favorite(db.Model):
-    __tablename__= "favorite"
-    id: Mapped[int] = mapped_column(primary_key=True)
-    usuario_id: Mapped[int] = mapped_column(Integer, ForeignKey("usuario.id") nullable=False)
-    planeta_id: Mapped[int] = mapped_column(Integer, ForeignKey("planeta.id") nullable=True)
-    personaje_id: Mapped[int] = mapped_column(Integer, ForeignKey("personaje.id") nullable=True)
 
-    usuario: Mapped["Usuario"] = relationship("Usuario", back_populates="favoritos")
-    planeta: Mapped["Planeta"] = relationship("Planeta")
-    personaje: Mapped["Personaje"] = relationship("Personaje")
-    
+
+class Characters(db.Model):
+    __tablename__ = "characters"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    name: Mapped[str] = mapped_column(String(100), nullable=False)
+    description: Mapped[str] = mapped_column(String(500), nullable=False)
+    planet_id: Mapped[int] = mapped_column(Integer, ForeignKey("planet.id"))
+    planet: Mapped["Planet"] = relationship ("Planet")
+
+    def serialize(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "description": self.description,
+        }
+class Favorites(db.Model):
+    __tablename__ = "favorites"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("user.id"), nullable=False)
+    planet_id: Mapped[int] = mapped_column(Integer, ForeignKey("planet.id"), nullable=True)
+    character_id: Mapped[int] = mapped_column(Integer, ForeignKey("character.id"), nullable=True)
+    user: Mapped["User"] = relationship ("User", back_populates="user")
+    planet: Mapped["Planet"] = relationship ("Planet")
+    characters: Mapped["Characters"] = relationship ("Characters")
